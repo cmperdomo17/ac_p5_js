@@ -1,0 +1,21 @@
+:root {
+  color-scheme: dark light;
+  font-family: sans-serif;
+}
+
+body {
+  background-color: #242424;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+#logo_js {
+  margin-left: 10px;
+  width: 50px;
+  height: 50px;
+}
