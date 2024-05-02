@@ -9,6 +9,8 @@ let gridSketch = new p5((p) => {
 
     p.setup = () => {
         p.createCanvas(width, height);
+        let canvas = p.select('canvas');
+        canvas.parent('canvas-container');
         p.frameRate(10);
         //p.noLoop();
         p.noStroke();
@@ -81,4 +83,4 @@ let gridSketch = new p5((p) => {
     }
 })
 
-export default sketch;
+export default gridSketch;

@@ -53,3 +53,5 @@ let sketch = new p5((p) => {
         p.updatePixels();
     }
 })
+
+export default sketch;
