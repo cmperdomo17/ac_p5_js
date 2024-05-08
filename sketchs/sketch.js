@@ -6,38 +6,61 @@ let sketch = new p5((p) => {
     let canvasWidth = 256;
     let fps = 0;
 
-    let firePalette = [];
-    let firePixels = [];
-    let buffer;
-    let fireRGB = [
-        0x07, 0x07, 0x07, 0x1F, 0x07, 0x07, 0x2F, 0x0F, 0x07, 0x47, 0x0F, 0x07, 0x57, 0x17, 0x07, 0x67,
-        0x1F, 0x07, 0x77, 0x1F, 0x07, 0x8F, 0x27, 0x07, 0x9F, 0x2F, 0x07, 0xAF, 0x3F, 0x07, 0xBF, 0x47,
-        0x07, 0xC7, 0x47, 0x07, 0xDF, 0x4F, 0x07, 0xDF, 0x57, 0x07, 0xDF, 0x57, 0x07, 0xD7, 0x5F, 0x07,
-        0xD7, 0x5F, 0x07, 0xD7, 0x67, 0x0F, 0xCF, 0x6F, 0x0F, 0xCF, 0x77, 0x0F, 0xCF, 0x7F, 0x0F, 0xCF,
-        0x87, 0x17, 0xC7, 0x87, 0x17, 0xC7, 0x8F, 0x17, 0xC7, 0x97, 0x1F, 0xBF, 0x9F, 0x1F, 0xBF, 0x9F,
-        0x1F, 0xBF, 0xA7, 0x27, 0xBF, 0xA7, 0x27, 0xBF, 0xAF, 0x2F, 0xB7, 0xAF, 0x2F, 0xB7, 0xB7, 0x2F,
-        0xB7, 0xB7, 0x37, 0xCF, 0xCF, 0x6F, 0xDF, 0xDF, 0x9F, 0xEF, 0xEF, 0xC7, 0xFF, 0xFF, 0xFF
+    // Paleta de colores para el fuego (de 0 a 255) (de blanco a negro)
+    let firePalette = [
+        p.color(7,7,7),
+        p.color(31,7,7),
+        p.color(47, 15,7),
+        p.color(71, 15,7),
+        p.color(87, 23,7),
+        p.color(103, 31,7),
+        p.color(119, 31,7),
+        p.color(143, 39,7),
+        p.color(159, 47,7),
+        p.color(175, 63,7),
+        p.color(191, 71,7),
+        p.color(199, 71,7),
+        p.color(223, 79,7),
+        p.color(223, 87,7),
+        p.color(223, 87,7),
+        p.color(215, 95,7),
+        p.color(215, 95,7),
+        p.color(215, 103,15),
+        p.color(207, 111,15),
+        p.color(207, 119,15),
+        p.color(207, 127,15),
+        p.color(207, 135,23),
+        p.color(199, 135,23),
+        p.color(199, 143,23),
+        p.color(199, 151,31),
+        p.color(191, 159,31),
+        p.color(191, 159,31),
+        p.color(191, 167,39),
+        p.color(191, 167,39),
+        p.color(191, 175,47),
+        p.color(183, 175,47),
+        p.color(183, 183,47),
+        p.color(183, 183,55),
+        p.color(207, 207,111),
+        p.color(223, 223,159),
+        p.color(239, 239,199),
+        p.color(255, 255,255)
     ];
+    let firePixels = [];
+    let buffer; 
 
     p.setup = () => {
         p.createCanvas(canvasWidth * 2, canvasHeight * 2);
         let i = 0;
         buffer = p.createGraphics(canvasWidth, canvasHeight);
-        let palIndex = 0;
-        while (palIndex < 37) {
-            firePalette[palIndex++] = {
-                r: fireRGB[i++],
-                g: fireRGB[i++],
-                b: fireRGB[i++]
-            };
-        }
 
+        // Llena todo el lienzo con 0 (negro)
         for (let i = 0; i < canvasWidth * canvasHeight; i++) {
             firePixels[i] = 0;
         }
-
+        // Llena la primera fila de blanco
         for (let i = 0; i < canvasWidth; i++) {
-            firePixels[(canvasHeight - 1) * canvasWidth + i] = 36;
+            firePixels[(canvasHeight - 1) * canvasWidth + i] = firePalette.length - 1;
         }
     }
 
@@ -45,10 +68,11 @@ let sketch = new p5((p) => {
         p.background(0);
         doFire();
         buffer.loadPixels();
+        // Renderiza cada pixel de la paleta en el buffer
         for (let h = 0; h < canvasHeight; h++) {
             for (let w = 0; w < canvasWidth; w++) {
                 let pixelValue = firePixels[h * canvasWidth + w];
-                buffer.set(w, h, p.color(firePalette[pixelValue].r, firePalette[pixelValue].g, firePalette[pixelValue].b));
+                buffer.set(w, h, p.color(firePalette[pixelValue]));
             }
         }
         buffer.updatePixels();
