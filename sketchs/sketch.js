@@ -2,11 +2,12 @@ import p5 from 'p5';
 
 let sketch = new p5((p) => {
 
+    //Las dimensiones tienen que ser un exponente de 2
     let canvasHeight = 256;
     let canvasWidth = 256;
     let fps = 0;
 
-    // Paleta de colores para el fuego (de 0 a 255) (de blanco a negro)
+    // Paleta de colores para el fuego (de blanco a negro)
     let firePalette = [
         p.color(7,7,7),
         p.color(31,7,7),
@@ -46,7 +47,7 @@ let sketch = new p5((p) => {
         p.color(239, 239,199),
         p.color(255, 255,255)
     ];
-    let firePixels = [];
+    let board = [];
     let buffer; 
 
     p.setup = () => {
@@ -56,11 +57,11 @@ let sketch = new p5((p) => {
 
         // Llena todo el lienzo con 0 (negro)
         for (let i = 0; i < canvasWidth * canvasHeight; i++) {
-            firePixels[i] = 0;
+            board[i] = 0;
         }
-        // Llena la primera fila de blanco
+        // Llena la primera fila de abajo de blanco
         for (let i = 0; i < canvasWidth; i++) {
-            firePixels[(canvasHeight - 1) * canvasWidth + i] = firePalette.length - 1;
+            board[(canvasHeight - 1) * canvasWidth + i] = firePalette.length - 1;
         }
     }
 
@@ -68,91 +69,106 @@ let sketch = new p5((p) => {
         p.background(0);
         doFire();
         buffer.loadPixels();
-        // Renderiza cada pixel de la paleta en el buffer
+        // Asigna al buffer el color de cada pixel en su respectiva posicion
+        let w;
+        let pixelColor;
         for (let h = 0; h < canvasHeight; h++) {
-            for (let w = 0; w < canvasWidth; w++) {
-                let pixelValue = firePixels[h * canvasWidth + w];
-                buffer.set(w, h, p.color(firePalette[pixelValue]));
+            for (w = 0; w < canvasWidth; w++) {
+                pixelColor = board[h * canvasWidth + w];
+                buffer.set(w, h, p.color(firePalette[pixelColor]));
             }
         }
+        //Actualiza los pixeles
         buffer.updatePixels();
         p.image(buffer, 0, 0, canvasWidth * 2, canvasHeight * 2);
         fps = p.frameRate();
+        //Imprime en pantalla los fps
         p.fill(255);
         p.stroke(0);
         p.textSize(16);
         p.text("FPS: " + fps.toFixed(2), 20, canvasHeight/6 - 10);
     }
 
-    const spreadFire = (pixel, curSrc, count, srcOffset, rand, canvasWidth) => {
-        if (pixel != 0) {
-            let randIdx = Math.round(Math.random() * 255.0) & 255;
-            let tmpSrc;
-
-            rand = (rand + 2) & 255;
-            tmpSrc = curSrc + ((count - (randIdx & 3) + 1) & (canvasWidth - 1));
-            firePixels[tmpSrc - canvasWidth] = pixel - (randIdx & 1);
+    const spreadFire = (pixel, actualRow, actualColumn, pixelIndex) => {
+        //Si el color del píxel no es negro
+        if (pixel !== 0) {
+          //Genera un numero al azar entre 0 y 3
+          let rand = Math.round(Math.random() * 2.0);
+          //Calcula el indice del pixel en la fila de arriba, en alguna de las 3 direcciones
+          //segun el numero aleatorio.
+          // 0: En el pixel arriba a la derecha
+          // 1: En el pixel inmediatamente arriba
+          // 2: En el pixel arriba a la izquierda
+          let upPixel = (actualRow + actualColumn) - canvasWidth - rand + 1;
+          //Dependiendo del numero aleatorio generado se le da un color al pixel de arriba:
+          // 0 o 2: el mismo color del pixel actual
+          // 1: un color mas oscuro
+          board[upPixel] = board[actualRow + actualColumn] - (rand % 2);
         } else {
-            firePixels[srcOffset - canvasWidth] = 0;
+          //Si el color del píxel es negro, el píxel de arriba también se vuelve negro
+          board[pixelIndex - canvasWidth] = 0;
         }
-        return rand;
-    }
+      };
 
     const doFire = () => {
 
-        let count = 0;
-        let curSrc = 0;
-        let srcOffset = 0;
-        let rand = 0;
+        let actualColumn = 0; 
+        let actualRow = 0;
+        let pixelIndex = 0;
         let step = 0;
         let pixel = 0;
-        rand = (Math.random() * 255.0) | 0;
-        curSrc = canvasWidth;
-
+        //Los primeros 256 (canvasWidth) elementos del board son los pixeles blancos, es decir la 1er fila
+        //entonces se salta a la 2da fila
+        actualRow = canvasWidth;
         do {
-            srcOffset = curSrc + count;
-            pixel = firePixels[srcOffset];
+            //Recorre el tablero
+            pixelIndex = actualRow + actualColumn;
+            pixel = board[pixelIndex];
+
             step = 2;
-
-            rand = spreadFire(pixel, curSrc, count, srcOffset, rand, canvasWidth);
-
-            curSrc += canvasWidth;
-            srcOffset += canvasWidth;
+            //Propaga los colores de fuego
+            spreadFire(pixel, actualRow, actualColumn, pixelIndex, canvasWidth);
+            //Salta a la fila de arriba
+            actualRow += canvasWidth;
+            pixelIndex += canvasWidth;
 
             do {
-                pixel = firePixels[srcOffset];
+                //Obtiene el color del pixel en la posicion actual
+                pixel = board[pixelIndex];
+                //El paso va de 2 en 2 porque en una iteracion se hace dos veces el spreadFire
                 step += 2;
-
-                rand = spreadFire(
+                //Se propaga el fuego a la fila de arriba
+                spreadFire(
                     pixel,
-                    curSrc,
-                    count,
-                    srcOffset,
-                    rand,
-                    canvasWidth
+                    actualRow,
+                    actualColumn,
+                    pixelIndex
                 );
 
-                pixel = firePixels[srcOffset + canvasWidth];
-                curSrc += canvasWidth;
-                srcOffset += canvasWidth;
+                pixel = board[pixelIndex + canvasWidth];
+                //Salta a la fila de arriba
+                actualRow += canvasWidth;
+                pixelIndex += canvasWidth;
 
-                rand = spreadFire(
+                //Nuevamente se propaga el fuego a la fila de arriba
+                spreadFire(
                     pixel,
-                    curSrc,
-                    count,
-                    srcOffset,
-                    rand,
-                    canvasWidth
+                    actualRow,
+                    actualColumn,
+                    pixelIndex
                 );
 
-                curSrc += canvasWidth;
-                srcOffset += canvasWidth;
+                //Salta a la fila de arriba
+                actualRow += canvasWidth;
+                pixelIndex += canvasWidth;
             } while (step < canvasHeight);
 
-            count++;
-            curSrc -= canvasWidth * canvasHeight - canvasWidth;
+            //Se pasa a la siguiente columna
+            actualColumn++;
+            //Se devuelve a la primera fila de abajo
+            actualRow -= canvasWidth * canvasHeight - canvasWidth;
         
-        } while (count < canvasWidth);
+        } while (actualColumn < canvasWidth);
     }
 
 });
